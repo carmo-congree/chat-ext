@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Assistant</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body class="bg-surface-50 w-full h-screen overflow-hidden flex flex-col">
+    <div class="container">
+        <div class="glass-header">
+            <div class="sticky top-0 bg-white/70 backdrop-blur-sm border-b border-surface-200 px-4 py-3 flex justify-between items-center">
+                <h1 class="text-lg font-semibold text-surface-900">Chat Assistant</h1>
+                <a id="settingsLink" href="#" class="text-surface-600 hover:text-surface-900 transition-colors">
+                    <i class="ri-settings-3-line text-xl"></i>
+                </a>
+            </div>
+        </div>
+      
+        <div class="p-4 space-y-4 overflow-y-auto flex-1">
+            <textarea id="content" 
+                      class="w-full h-32 p-3 rounded-xl border-surface-200 bg-white shadow-soft focus:border-primary-500 focus:ring-primary-500 resize-none" 
+                      placeholder="Type or paste text here, or wait for page content to load..."></textarea>
+            
+            <div class="grid grid-cols-4 gap-2">
+                <button class="button quick px-3 py-2.5 bg-white shadow-soft hover:shadow-none rounded-xl flex flex-col items-center text-sm text-surface-600 hover:text-surface-900 transition-all" data-action="proofread">
+                    <i class="ri-spell-check-line text-lg mb-1"></i>
+                    Check
+                </button>
+                <button class="button quick px-3 py-2.5 bg-white shadow-soft hover:shadow-none rounded-xl flex flex-col items-center text-sm text-surface-600 hover:text-surface-900 transition-all" data-action="summarize">
+                    <i class="ri-file-list-3-line text-lg mb-1"></i>
+                    Summary
+                </button>
+                <button class="button quick px-3 py-2.5 bg-white shadow-soft hover:shadow-none rounded-xl flex flex-col items-center text-sm text-surface-600 hover:text-surface-900 transition-all" data-action="rewrite">
+                    <i class="ri-pen-nib-line text-lg mb-1"></i>
+                    Rewrite
+                </button>
+                <button class="button quick px-3 py-2.5 bg-white shadow-soft hover:shadow-none rounded-xl flex flex-col items-center text-sm text-surface-600 hover:text-surface-900 transition-all" data-action="makeList">
+                    <i class="ri-list-check text-lg mb-1"></i>
+                    List
+                </button>
+            </div>
+            
+            <button id="sendToChat" class="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl flex items-center justify-center space-x-2 transition-colors shadow-soft hover:shadow-none">
+                <i class="ri-send-plane-line"></i>
+                <span>Ask AI</span>
+            </button>
+            
+            <div id="response" class="bg-white rounded-xl border border-surface-200 p-4 min-h-[100px] shadow-soft hidden"></div>
+            
+            <div id="loading" class="hidden flex justify-center items-center py-4">
+                <div class="animate-spin rounded-full h-8 w-8 border-2 border-primary-600 border-t-transparent"></div>
+            </div>
+        </div>
+    </div>
+  
+    <script src="popup.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Chat Extension</title>
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Extension Settings</h1>
+            <button onclick="window.close()" class="close-button">
+                <i class="ri-close-line"></i>
+            </button>
+        </div>
+        
+        <div class="form-group">
+            <label for="apiUrl" class="label">API URL</label>
+            <input type="text" id="apiUrl" class="input" placeholder="http://localhost:8000">
+        </div>
+
+        <div class="form-group">
+            <label for="apiToken" class="label">API Token (Optional)</label>
+            <input type="text" id="apiToken" class="input" placeholder="Enter your API token">
+        </div>
+
+        <div class="form-group">
+            <label for="modelName" class="label">Model Name</label>
+            <input type="text" id="modelName" class="input" placeholder="meta-llama/Llama-3.2-1B-Instruct">
+        </div>
+
+        <div class="form-group">
+            <label for="maxTokens" class="label">Max Tokens</label>
+            <input type="number" id="maxTokens" class="input" value="500" min="1" max="2048">
+        </div>
+
+        <button id="saveSettings" class="save-button">Save Settings</button>
+        <div id="saveMessage" class="save-message">Settings saved!</div>
+    </div>
+</body>
+</html>
