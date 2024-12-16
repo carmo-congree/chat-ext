@@ -180,6 +180,17 @@ async function handleSendToChat() {
   }
 }
 
+function handleCopyToClipboard() {
+  const responseContent = document.getElementById('responseContent');
+  if (responseContent && responseContent.textContent.trim()) {
+    navigator.clipboard.writeText(responseContent.textContent.trim()).then(() => {
+      console.log('Content copied to clipboard');
+    }).catch(err => {
+      console.error('Failed to copy content:', err);
+    });
+  }
+}
+
 // Initialize content loading
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize response area first
@@ -216,34 +227,58 @@ document.addEventListener('DOMContentLoaded', () => {
     sendToChat.addEventListener('click', handleSendToChat);
   }
   
+  // Initialize question input and clear button
+  const clearQuestion = document.getElementById('clearQuestion');
+  
+  // Check initial state
+  clearQuestion.classList.toggle('hidden', !questionInput.value.trim());
+  sendToChat.disabled = !questionInput.value.trim();
+  
+  questionInput.addEventListener('input', () => {
+    sendToChat.disabled = !questionInput.value.trim();
+    clearQuestion.classList.toggle('hidden', !questionInput.value.trim());
+  });
+  
+  clearQuestion.addEventListener('click', () => {
+    questionInput.value = '';
+    sendToChat.disabled = true;
+    clearQuestion.classList.add('hidden');
+  });
+
+  const copyButton = document.getElementById('copyToClipboard');
+  if (copyButton) {
+    copyButton.addEventListener('click', handleCopyToClipboard);
+  }
+  
   // Start content loading
   loadTabContent();
 });
 
-// Listen for tab changes
-chrome.tabs.onActivated.addListener(loadTabContent);
+// Clear UI state when changing tabs
+function clearUIState() {
+  const question = document.getElementById('question');
+  const responseArea = document.getElementById('response');
+  const clearQuestion = document.getElementById('clearQuestion');
+  const sendToChat = document.getElementById('sendToChat');
+  
+  if (question) question.value = '';
+  if (responseArea) responseArea.innerHTML = '<div id="responseContent"></div>';
+  if (clearQuestion) clearQuestion.classList.add('hidden');
+  if (sendToChat) sendToChat.disabled = true;
+}
+
+// Modify tab listeners to include clearing UI state
+chrome.tabs.onActivated.addListener(() => {
+  clearUIState();
+  loadTabContent();
+});
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'complete') {
+    clearUIState();
     loadTabContent();
   }
 });
-
-function copyHandler() {
-  const responseContent = document.getElementById('responseContent');
-  if (!responseContent) return;
-  
-  try {
-    navigator.clipboard.writeText(responseContent.textContent);
-    this.classList.add('success');
-    this.innerHTML = '<i class="ri-check-line"></i>';
-    setTimeout(() => {
-      this.classList.remove('success');
-      this.innerHTML = '<i class="ri-clipboard-line"></i>';
-    }, 2000);
-  } catch (err) {
-    console.error('Failed to copy:', err);
-  }
-}
 
 function displayResponse(response) {
   // First ensure response area exists, if not initialize it
@@ -263,33 +298,18 @@ function displayResponse(response) {
     content.id = 'responseContent';
     responseArea.appendChild(content);
   }
-  
-  if (!responseArea.querySelector('#copyButton')) {
-    const header = document.createElement('div');
-    header.className = 'response-header';
-    const copyButton = document.createElement('button');
-    copyButton.id = 'copyButton';
-    copyButton.className = 'button copy hidden';
-    copyButton.title = 'Copy to clipboard';
-    copyButton.innerHTML = '<i class="ri-clipboard-line"></i>';
-    header.appendChild(copyButton);
-    responseArea.insertBefore(header, responseArea.firstChild);
-  }
 
   const responseContent = document.getElementById('responseContent');
-  const copyButton = document.getElementById('copyButton');
+  const copyButton = document.getElementById('copyToClipboard');
 
   responseArea.classList.remove('hidden');
 
   if (!response.success) {
     responseContent.innerHTML = `<div class="error-message">❌ ${response.error.trim()}</div>`;
-    copyButton.classList.add('hidden');
     return;
   }
 
   try {
-    copyButton.classList.remove('hidden');
-    
     if (typeof marked === 'undefined') {
       responseContent.innerHTML = `<div class="text-content">${response.message.trim().replace(/\n/g, '<br>')}</div>`;
       return;
@@ -304,12 +324,15 @@ function displayResponse(response) {
       });
     }
 
-    copyButton.removeEventListener('click', copyHandler);
-    copyButton.addEventListener('click', copyHandler);
-
   } catch (error) {
     console.error('Response processing error:', error);
     responseContent.textContent = response.message;
+  }
+
+  if (responseContent.textContent.trim()) {
+    copyButton.disabled = false;
+  } else {
+    copyButton.disabled = true;
   }
 }
 
@@ -320,19 +343,12 @@ function initializeResponseArea() {
   if (!responseArea) {
     responseArea = document.createElement('div');
     responseArea.id = 'response';
-    responseArea.className = 'bg-white rounded-xl border border-surface-200 p-4 min-h-[100px] shadow-soft hidden';
+    responseArea.className = 'bg-white/50 rounded-lg border border-surface-200/75 p-3 overflow-y-auto shadow-sm relative min-h-[100px]';
     document.querySelector('.container')?.appendChild(responseArea);
   }
 
-  // Clear existing content
-  responseArea.innerHTML = `
-    <div class="response-header">
-      <button id="copyButton" class="button copy hidden" title="Copy to clipboard">
-        <i class="ri-clipboard-line"></i>
-      </button>
-    </div>
-    <div id="responseContent"></div>
-  `;
+  // Clear existing content and maintain structure
+  responseArea.innerHTML = `<div id="responseContent"></div>`;
 
   return responseArea;
 }
