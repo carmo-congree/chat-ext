@@ -38,11 +38,6 @@ async function build() {
       path.join(srcDir, 'popup.html'), 
       path.join(distDir, 'popup.html')
     );
-    fs.copySync(
-      path.join(srcDir, 'settings.html'),
-      path.join(distDir, 'settings.html')
-    );
-
     console.log('Build complete! Files copied to dist/');
   } catch (error) {
     console.error('Build error:', error);

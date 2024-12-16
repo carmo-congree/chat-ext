@@ -4,6 +4,104 @@ import 'highlight.js/styles/github.css';
 import 'remixicon/fonts/remixicon.css';
 import './input.css';
 
+// Add at the beginning after imports
+async function initializeTheme() {
+  const { theme } = await chrome.storage.sync.get(['theme']);
+  applyTheme(theme || 'light');
+}
+
+function applyTheme(theme) {
+  if (theme === 'system') {
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  } else if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
+
+// Add settings panel handling
+function toggleSettingsPanel() {
+  const panel = document.getElementById('settingsPanel');
+  panel.classList.toggle('hidden');
+}
+
+async function loadSettings() {
+  const settings = await chrome.storage.sync.get({
+    apiUrl: 'http://localhost:8000',
+    apiToken: '',
+    modelName: 'meta-llama/Llama-2-7b-chat',
+    maxTokens: 500,
+    theme: 'light'
+  });
+  
+  // Populate form fields
+  document.getElementById('apiUrl').value = settings.apiUrl;
+  document.getElementById('apiToken').value = settings.apiToken;
+  document.getElementById('modelName').value = settings.modelName;
+  document.getElementById('maxTokens').value = settings.maxTokens;
+  document.getElementById('theme').value = settings.theme;
+
+  applyTheme(settings.theme);
+}
+
+async function handleSaveSettings() {
+  const saveButton = document.getElementById('saveSettings');
+  const saveMessage = document.getElementById('saveMessage');
+  
+  saveButton.disabled = true;
+  saveMessage.classList.remove('hidden');
+  
+  try {
+    const apiUrl = document.getElementById('apiUrl').value.trim();
+    const apiToken = document.getElementById('apiToken').value.trim();
+    const modelName = document.getElementById('modelName').value.trim();
+    const maxTokens = parseInt(document.getElementById('maxTokens').value);
+    const theme = document.getElementById('theme').value;
+
+    // Validate
+    if (!apiUrl) throw new Error('API URL is required');
+    if (!maxTokens || maxTokens < 1 || maxTokens > 2048) {
+      throw new Error('Max tokens must be between 1 and 2048');
+    }
+
+    // Save settings
+    await chrome.storage.sync.set({
+      apiUrl,
+      apiToken,
+      modelName,
+      maxTokens,
+      theme
+    });
+
+    saveMessage.textContent = '✓ Settings saved!';
+    saveMessage.classList.remove('text-red-600');
+    saveMessage.classList.add('text-green-600');
+
+    // Close settings panel after brief delay
+    setTimeout(() => {
+      toggleSettingsPanel();
+      saveButton.disabled = false;
+      saveMessage.classList.add('hidden');
+    }, 750);
+
+    // Notify about settings update
+    updateFooterInfo();
+    applyTheme(theme);
+
+  } catch (error) {
+    console.error('Save error:', error);
+    saveMessage.textContent = `✗ ${error.message}`;
+    saveMessage.classList.remove('text-green-600');
+    saveMessage.classList.add('text-red-600');
+    saveButton.disabled = false;
+  }
+}
+
 // Configure marked with highlight.js
 marked.setOptions({
   highlight: function(code, lang) {
@@ -191,19 +289,20 @@ function handleCopyToClipboard() {
   }
 }
 
-// Initialize content loading
+// Add to DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', () => {
+  initializeTheme();
   // Initialize response area first
   initializeResponseArea();
+  updateFooterInfo(); // Add this line
   
   // Initialize settings link and handler
   const settingsLink = document.getElementById('settingsLink');
   if (settingsLink) {
     settingsLink.addEventListener('click', (e) => {
       e.preventDefault();
-      chrome.tabs.create({
-        url: 'settings.html'
-      });
+      // Open settings.html in the extension popup instead of new tab
+      window.location.href = 'settings.html';
     });
   }
   
@@ -252,6 +351,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Start content loading
   loadTabContent();
+
+  // Initialize settings
+  loadSettings();
+  
+  // Add settings toggle handler
+  document.getElementById('toggleSettings').addEventListener('click', toggleSettingsPanel);
+  
+  // Add save settings handler
+  document.getElementById('saveSettings').addEventListener('click', handleSaveSettings);
 });
 
 // Clear UI state when changing tabs
@@ -358,4 +466,96 @@ window.addEventListener('unload', () => {
   if (pollInterval) {
     clearInterval(pollInterval);
   }
+});
+
+// Add system theme change listener
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', async (e) => {
+  const { theme } = await chrome.storage.sync.get(['theme']);
+  if (theme === 'system') {
+    applyTheme('system');
+  }
+});
+
+// Make updateFooterInfo more robust
+async function updateFooterInfo() {
+  try {
+    const settings = await chrome.storage.sync.get(['apiUrl', 'modelName']);
+    console.log('Footer info update:', settings); // Debug log
+    
+    const apiUrlDisplay = document.getElementById('apiUrlDisplay');
+    const modelNameDisplay = document.getElementById('modelNameDisplay');
+    
+    if (apiUrlDisplay) {
+      const displayUrl = settings.apiUrl || 'API URL not set';
+      apiUrlDisplay.textContent = displayUrl;
+      apiUrlDisplay.title = displayUrl;
+    }
+    
+    if (modelNameDisplay) {
+      const displayModel = settings.modelName || 'meta-llama/Llama-2-7b-chat';
+      modelNameDisplay.textContent = displayModel;
+      modelNameDisplay.title = displayModel;
+    }
+  } catch (error) {
+    console.error('Failed to update footer info:', error);
+  }
+}
+
+// Listen for settings changes from any source
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync') {
+    // Update theme if it changed
+    if (changes.theme) {
+      applyTheme(changes.theme.newValue);
+    }
+    
+    // Update footer info if relevant settings changed
+    if (changes.apiUrl || changes.modelName) {
+      updateFooterInfo();
+    }
+  }
+});
+
+// Also listen for direct messages from settings page
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'settingsUpdated') {
+    updateFooterInfo();
+    if (message.settings.theme) {
+      applyTheme(message.settings.theme);
+    }
+  }
+});
+
+// Update the settings change listener
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.action === 'settingsUpdated') {
+    console.log('Settings updated:', message.settings); // Debug log
+    updateFooterInfo();
+    if (message.settings.theme) {
+      applyTheme(message.settings.theme);
+    }
+    return true;
+  }
+});
+
+// Modify quick action initialization to be more specific
+document.addEventListener('DOMContentLoaded', () => {
+  initializeTheme();
+  initializeResponseArea();
+  updateFooterInfo();
+  
+  // Initialize settings link with separate handler
+  document.getElementById('settingsLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    // Prevent this event from being handled by quick action handlers
+    e.stopPropagation();
+    window.location.href = 'settings.html';
+  });
+  
+  // Only attach quick action handlers to buttons with .quick AND data-action
+  document.querySelectorAll('.quick[data-action]').forEach(button => {
+    button.addEventListener('click', handleQuickAction);
+  });
+
+  // ...rest of your initialization code...
 });

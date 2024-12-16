@@ -7,7 +7,6 @@ module.exports = {
   mode: 'production', // Add this line to fix the warning
   entry: {
     popup: './src/popup.js',
-    settings: './src/settings.js',
     content: './src/content.js',
     background: './src/background.js',
   },
@@ -57,11 +56,6 @@ module.exports = {
       template: './src/popup.html',
       filename: 'popup.html',
       chunks: ['popup']
-    }),
-    new HtmlWebpackPlugin({
-      template: './src/settings.html',
-      filename: 'settings.html',
-      chunks: ['settings']
     }),
     new MiniCssExtractPlugin({
       filename: 'styles.css'

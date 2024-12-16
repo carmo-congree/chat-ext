@@ -33,13 +33,13 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "options_page": "settings.html",
+  "options_page": "popup.html",
   "side_panel": {
     "default_path": "popup.html"
   },
   "web_accessible_resources": [
     {
-      "resources": ["settings.html", "assets/*"],
+      "resources": ["assets/*"],
       "matches": ["<all_urls>"]
     }
   ]

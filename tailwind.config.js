@@ -1,6 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/**/*.{html,js,css}'],
+  darkMode: 'class',  // Enable class-based dark mode
   theme: {
     extend: {
       colors: {
@@ -18,6 +19,16 @@ module.exports = {
           600: '#475569',
           700: '#334155',
           900: '#0f172a',
+        },
+        dark: {
+          surface: {
+            50: '#18181b',
+            100: '#27272a',
+            200: '#3f3f46',
+            600: '#a1a1aa',
+            700: '#d4d4d8',
+            900: '#fafafa',
+          }
         }
       },
       borderRadius: {

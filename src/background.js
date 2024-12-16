@@ -58,6 +58,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Add settings change listener
+chrome.storage.onChanged.addListener((changes, namespace) => {
+  if (namespace === 'sync') {
+    // Broadcast settings changes to all open tabs
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        try {
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'settingsUpdated',
+            changes
+          });
+        } catch (error) {
+          // Ignore errors for inactive tabs
+          console.debug('Could not send to tab:', tab.id);
+        }
+      });
+    });
+  }
+});
+
 // Handle extension icon click to open sidebar
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab.url.startsWith('chrome://')) {
