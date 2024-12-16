@@ -97,10 +97,3 @@ chrome.action.onClicked.addListener(async (tab) => {
     });
   }
 });
-
-// Optional: Set default state to open for all tabs
-// chrome.tabs.onCreated.addListener((tab) => {
-//   if (!tab.url?.startsWith('chrome://')) {
-//     chrome.sidePanel.open({ tabId: tab.id });
-//   }
-// });

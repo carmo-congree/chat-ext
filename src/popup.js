@@ -292,16 +292,14 @@ function handleCopyToClipboard() {
 // Add to DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', () => {
   initializeTheme();
-  // Initialize response area first
   initializeResponseArea();
-  updateFooterInfo(); // Add this line
+  updateFooterInfo();
   
   // Initialize settings link and handler
   const settingsLink = document.getElementById('settingsLink');
   if (settingsLink) {
     settingsLink.addEventListener('click', (e) => {
       e.preventDefault();
-      // Open settings.html in the extension popup instead of new tab
       window.location.href = 'settings.html';
     });
   }
@@ -480,7 +478,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', asy
 async function updateFooterInfo() {
   try {
     const settings = await chrome.storage.sync.get(['apiUrl', 'modelName']);
-    console.log('Footer info update:', settings); // Debug log
+    console.log('Footer info update:', settings);
     
     const apiUrlDisplay = document.getElementById('apiUrlDisplay');
     const modelNameDisplay = document.getElementById('modelNameDisplay');
@@ -529,7 +527,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Update the settings change listener
 chrome.runtime.onMessage.addListener((message) => {
   if (message.action === 'settingsUpdated') {
-    console.log('Settings updated:', message.settings); // Debug log
+    console.log('Settings updated:', message.settings);
     updateFooterInfo();
     if (message.settings.theme) {
       applyTheme(message.settings.theme);
@@ -556,6 +554,45 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.quick[data-action]').forEach(button => {
     button.addEventListener('click', handleQuickAction);
   });
+});
 
-  // ...rest of your initialization code...
+document.addEventListener('DOMContentLoaded', () => {
+    // Get DOM elements
+    const settingsButton = document.getElementById('toggleSettings');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const saveSettingsButton = document.getElementById('saveSettings');
+    const saveMessage = document.getElementById('saveMessage');
+    const content = document.getElementById('content');
+    const question = document.getElementById('question');
+    const clearQuestionButton = document.getElementById('clearQuestion');
+    const sendButton = document.getElementById('sendToChat');
+    const responseContent = document.getElementById('responseContent');
+    const copyButton = document.getElementById('copyToClipboard');
+    const loading = document.getElementById('loading');
+    const apiUrlDisplay = document.getElementById('apiUrlDisplay');
+    const modelNameDisplay = document.getElementById('modelNameDisplay');
+    const quickButtons = document.querySelectorAll('.button.quick');
+
+    // Initialize settings
+    loadSettings();
+
+    settingsButton.addEventListener('click', toggleSettingsPanel);
+    saveSettingsButton.addEventListener('click', handleSaveSettings);
+    clearQuestionButton.addEventListener('click', () => {
+        question.value = '';
+        updateSendButton();
+    });
+    sendButton.addEventListener('click', handleSendToChat);
+    copyButton.addEventListener('click', handleCopyToClipboard);
+    question.addEventListener('input', () => {
+        sendButton.disabled = !question.value.trim();
+    });
+    content.addEventListener('input', () => {
+        sendButton.disabled = !question.value.trim();
+    });
+
+    // Quick action buttons
+    quickButtons.forEach(button => {
+        button.addEventListener('click', handleQuickAction);
+    });
 });
