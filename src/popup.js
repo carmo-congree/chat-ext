@@ -2,7 +2,7 @@ import hljs from 'highlight.js';
 import { marked } from 'marked';
 import 'highlight.js/styles/github.css';
 import 'remixicon/fonts/remixicon.css';
-import '../input.css';
+import './input.css';
 
 // Configure marked with highlight.js
 marked.setOptions({
@@ -148,8 +148,9 @@ async function handleSendToChat() {
   const loading = document.getElementById('loading');
   const responseArea = document.getElementById('response');
   const content = document.getElementById('content');
+  const question = document.getElementById('question');
   
-  if (!loading || !responseArea || !content) {
+  if (!loading || !responseArea || !content || !question) {
     console.error('Required elements not found');
     return;
   }
@@ -160,7 +161,7 @@ async function handleSendToChat() {
   try {
     const result = await chrome.runtime.sendMessage({
       action: 'sendToAPI',
-      content: content.value
+      content: `Context: ${content.value}\n\nQuestion: ${question.value}`
     });
     
     if (chrome.runtime.lastError) {
@@ -189,72 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (settingsLink) {
     settingsLink.addEventListener('click', (e) => {
       e.preventDefault();
-      
-      const container = document.querySelector('.container');
-      if (!container) {
-        console.error('Container not found');
-        return;
-      }
-      
-      container.innerHTML = `
-        <h1>Settings</h1>
-        <div class="form-group">
-          <label for="apiUrl">API URL</label>
-          <input type="text" id="apiUrl" class="input" placeholder="http://localhost:8000">
-        </div>
-        <div class="form-group">
-          <label for="apiToken">API Token (Optional)</label>
-          <input type="text" id="apiToken" class="input" placeholder="Enter your API token">
-        </div>
-        <div class="form-group">
-          <label for="modelName">Model Name</label>
-          <input type="text" id="modelName" class="input" placeholder="meta-llama/Llama-2-7b-chat">
-        </div>
-        <div class="form-group">
-          <label for="maxTokens">Max Tokens</label>
-          <input type="number" id="maxTokens" class="input" value="500" min="1" max="2048">
-        </div>
-        <button id="saveSettings" class="button primary">Save Settings</button>
-        <div id="saveMessage" class="save-message">Settings saved!</div>
-      `;
-
-      // Add save settings handler after content is inserted
-      const saveSettings = document.getElementById('saveSettings');
-      if (saveSettings) {
-        saveSettings.addEventListener('click', async () => {
-          const apiUrl = document.getElementById('apiUrl')?.value.trim();
-          const apiToken = document.getElementById('apiToken')?.value.trim();
-          const modelName = document.getElementById('modelName')?.value.trim();
-          const maxTokens = parseInt(document.getElementById('maxTokens')?.value) || 500;
-          
-          await chrome.storage.sync.set({
-            apiUrl,
-            apiToken,
-            modelName,
-            maxTokens
-          });
-          
-          const saveMessage = document.getElementById('saveMessage');
-          if (saveMessage) {
-            saveMessage.style.display = 'block';
-            setTimeout(() => {
-              saveMessage.style.display = 'none';
-              location.reload();
-            }, 1000);
-          }
-        });
-      }
-
-      // Load existing settings
-      (async () => {
-        const settings = await chrome.storage.sync.get(['apiUrl', 'apiToken', 'modelName', 'maxTokens']);
-        if (document.getElementById('apiUrl')) {
-          document.getElementById('apiUrl').value = settings.apiUrl || 'http://localhost:8000';
-          document.getElementById('apiToken').value = settings.apiToken || '';
-          document.getElementById('modelName').value = settings.modelName || 'meta-llama/Llama-2-7b-chat';
-          document.getElementById('maxTokens').value = settings.maxTokens || 500;
-        }
-      })();
+      chrome.tabs.create({
+        url: 'settings.html'
+      });
     });
   }
   
@@ -265,8 +203,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  // Initialize send to chat button
+  // Add question input validation
+  const questionInput = document.getElementById('question');
   const sendToChat = document.getElementById('sendToChat');
+  
+  questionInput.addEventListener('input', () => {
+    sendToChat.disabled = !questionInput.value.trim();
+  });
+  
+  // Initialize send to chat button
   if (sendToChat) {
     sendToChat.addEventListener('click', handleSendToChat);
   }
@@ -301,20 +246,43 @@ function copyHandler() {
 }
 
 function displayResponse(response) {
-  const responseArea = document.getElementById('response');
-  const responseContent = document.getElementById('responseContent');
-  const copyButton = document.getElementById('copyButton');
-  
-  if (!responseArea || !responseContent || !copyButton) {
-    console.error('Response elements not found, reinitializing...');
+  // First ensure response area exists, if not initialize it
+  if (!document.getElementById('response')) {
     initializeResponseArea();
-    // Try again after initialization
-    setTimeout(() => displayResponse(response), 0);
+  }
+
+  const responseArea = document.getElementById('response');
+  if (!responseArea) {
+    console.error('Failed to initialize response area');
     return;
   }
 
+  // Ensure child elements exist
+  if (!responseArea.querySelector('#responseContent')) {
+    const content = document.createElement('div');
+    content.id = 'responseContent';
+    responseArea.appendChild(content);
+  }
+  
+  if (!responseArea.querySelector('#copyButton')) {
+    const header = document.createElement('div');
+    header.className = 'response-header';
+    const copyButton = document.createElement('button');
+    copyButton.id = 'copyButton';
+    copyButton.className = 'button copy hidden';
+    copyButton.title = 'Copy to clipboard';
+    copyButton.innerHTML = '<i class="ri-clipboard-line"></i>';
+    header.appendChild(copyButton);
+    responseArea.insertBefore(header, responseArea.firstChild);
+  }
+
+  const responseContent = document.getElementById('responseContent');
+  const copyButton = document.getElementById('copyButton');
+
+  responseArea.classList.remove('hidden');
+
   if (!response.success) {
-    responseContent.innerHTML = `<div class="error-message">❌ ${response.error}</div>`;
+    responseContent.innerHTML = `<div class="error-message">❌ ${response.error.trim()}</div>`;
     copyButton.classList.add('hidden');
     return;
   }
@@ -322,27 +290,21 @@ function displayResponse(response) {
   try {
     copyButton.classList.remove('hidden');
     
-    // Check if marked is available
     if (typeof marked === 'undefined') {
-      responseContent.innerHTML = `<div class="text-content">${response.message.replace(/\n/g, '<br>')}</div>`;
-      console.warn('marked.js not available - displaying plain text');
+      responseContent.innerHTML = `<div class="text-content">${response.message.trim().replace(/\n/g, '<br>')}</div>`;
       return;
     }
 
-    // Convert markdown to HTML
-    let htmlContent = marked.parse(response.message);
+    let htmlContent = marked.parse(response.message.trim());
     responseContent.innerHTML = htmlContent;
     
-    // Apply syntax highlighting if available
     if (typeof hljs !== 'undefined') {
       responseContent.querySelectorAll('pre code').forEach((block) => {
         hljs.highlightElement(block);
       });
     }
 
-    // Remove any existing click handlers
     copyButton.removeEventListener('click', copyHandler);
-    // Add copy functionality
     copyButton.addEventListener('click', copyHandler);
 
   } catch (error) {
@@ -352,33 +314,27 @@ function displayResponse(response) {
 }
 
 function initializeResponseArea() {
-  const responseArea = document.getElementById('response');
+  let responseArea = document.getElementById('response');
+  
+  // If response area doesn't exist, create it
   if (!responseArea) {
-    console.error('Response area not found');
-    return;
+    responseArea = document.createElement('div');
+    responseArea.id = 'response';
+    responseArea.className = 'bg-white rounded-xl border border-surface-200 p-4 min-h-[100px] shadow-soft hidden';
+    document.querySelector('.container')?.appendChild(responseArea);
   }
 
-  // Ensure the element is visible
-  responseArea.classList.remove('hidden');
-  
-  // Create elements
-  const header = document.createElement('div');
-  header.className = 'response-header';
-  
-  const copyButton = document.createElement('button');
-  copyButton.id = 'copyButton';
-  copyButton.className = 'button copy hidden';
-  copyButton.title = 'Copy to clipboard';
-  copyButton.innerHTML = '<i class="ri-clipboard-line"></i>';
-  
-  const content = document.createElement('div');
-  content.id = 'responseContent';
-  
-  // Clear and append new elements
-  responseArea.innerHTML = '';
-  header.appendChild(copyButton);
-  responseArea.appendChild(header);
-  responseArea.appendChild(content);
+  // Clear existing content
+  responseArea.innerHTML = `
+    <div class="response-header">
+      <button id="copyButton" class="button copy hidden" title="Copy to clipboard">
+        <i class="ri-clipboard-line"></i>
+      </button>
+    </div>
+    <div id="responseContent"></div>
+  `;
+
+  return responseArea;
 }
 
 // Add cleanup when popup closes

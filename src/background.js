@@ -1,4 +1,4 @@
-import Client from '../lib/client.js';
+import Client from './client.js';
 
 const rateLimiter = {
   lastRequest: 0,
@@ -32,7 +32,7 @@ async function sendToAPI(content) {
       throw new Error('Invalid response from API. Please check your settings and try again.');
     }
 
-    return { success: true, message: chatCompletion.choices[0].message.content };
+    return { success: true, message: chatCompletion.choices[0].message.content.trim() };
   } catch (error) {
     return { 
       success: false, 

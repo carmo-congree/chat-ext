@@ -35,11 +35,11 @@ async function build() {
 
     // Copy HTML files
     fs.copySync(
-      path.join(srcDir, 'popup/popup.html'), 
+      path.join(srcDir, 'popup.html'), 
       path.join(distDir, 'popup.html')
     );
     fs.copySync(
-      path.join(srcDir, 'settings/settings.html'),
+      path.join(srcDir, 'settings.html'),
       path.join(distDir, 'settings.html')
     );
 

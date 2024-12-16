@@ -6,10 +6,10 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 module.exports = {
   mode: 'production', // Add this line to fix the warning
   entry: {
-    popup: './src/popup/popup.js',
-    settings: './src/settings/settings.js',
-    content: './src/content/content.js',
-    background: './src/background/background.js',
+    popup: './src/popup.js',
+    settings: './src/settings.js',
+    content: './src/content.js',
+    background: './src/background.js',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -54,12 +54,12 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './src/popup/popup.html',
+      template: './src/popup.html',
       filename: 'popup.html',
       chunks: ['popup']
     }),
     new HtmlWebpackPlugin({
-      template: './src/settings/settings.html',
+      template: './src/settings.html',
       filename: 'settings.html',
       chunks: ['settings']
     }),
