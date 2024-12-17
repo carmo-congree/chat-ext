@@ -7,9 +7,9 @@ const rateLimiter = {
 
 async function sendToAPI(content) {
   try {
-    const settings = await chrome.storage.sync.get(['apiUrl', 'apiToken', 'modelName', 'maxTokens']);
+    const settings = await chrome.storage.sync.get(['apiUrl', 'apiToken', 'modelName', 'maxTokens', 'azureApiUrl', 'azureApiToken']);
     
-    if (!settings.apiUrl) {
+    if (!settings.apiUrl && !settings.azureApiUrl) {
       throw new Error('API URL is not configured. Please open settings and configure the API URL.');
     }
 
@@ -19,7 +19,9 @@ async function sendToAPI(content) {
 
     const client = new Client({
       apiKey: settings.apiToken,
-      baseURL: settings.apiUrl
+      baseURL: settings.apiUrl,
+      azureApiUrl: settings.azureApiUrl,
+      azureApiToken: settings.azureApiToken
     });
 
     const chatCompletion = await client.chat.completions.create({

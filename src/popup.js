@@ -36,7 +36,9 @@ async function loadSettings() {
     apiToken: '',
     modelName: 'meta-llama/Llama-2-7b-chat',
     maxTokens: 500,
-    theme: 'light'
+    theme: 'light',
+    azureApiUrl: '',
+    azureApiToken: ''
   });
   
   // Populate form fields
@@ -45,6 +47,8 @@ async function loadSettings() {
   document.getElementById('modelName').value = settings.modelName;
   document.getElementById('maxTokens').value = settings.maxTokens;
   document.getElementById('theme').value = settings.theme;
+  document.getElementById('azureApiUrl').value = settings.azureApiUrl;
+  document.getElementById('azureApiToken').value = settings.azureApiToken;
 
   applyTheme(settings.theme);
 }
@@ -62,6 +66,8 @@ async function handleSaveSettings() {
     const modelName = document.getElementById('modelName').value.trim();
     const maxTokens = parseInt(document.getElementById('maxTokens').value);
     const theme = document.getElementById('theme').value;
+    const azureApiUrl = document.getElementById('azureApiUrl').value.trim();
+    const azureApiToken = document.getElementById('azureApiToken').value.trim();
 
     // Validate
     if (!apiUrl) throw new Error('API URL is required');
@@ -75,7 +81,9 @@ async function handleSaveSettings() {
       apiToken,
       modelName,
       maxTokens,
-      theme
+      theme,
+      azureApiUrl,
+      azureApiToken
     });
 
     saveMessage.textContent = '✓ Settings saved!';

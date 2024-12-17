@@ -53,6 +53,12 @@ model: meta-llama/Llama-3.2-1B-Instruct
 
 The above example is for Llama-3.2-1B-Instruct model. You can use any compatible model you want.
 
+If you want to use the OpenAI model in Azure, you can use the following:
+
+```
+AZURE_OPENAI_URL: Your Azure OpenAI endpoint.
+AZURE_OPENAI_API_TOKEN: Your Azure OpenAI API token.
+```
 
 ## Detailed Installation
 
@@ -90,6 +96,8 @@ npm run build
    - API Token: Your Hugging Face API token (for gated repos).
    - Model Name: The model to use (default: meta-llama/Llama-2-7b-chat)
    - Max Tokens: Maximum response length (default: 500)
+   - AZURE_OPENAI_URL: Your Azure OpenAI endpoint.
+   - AZURE_OPENAI_API_TOKEN: Your Azure OpenAI API token.
 
 ## Usage
 
