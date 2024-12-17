@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs-extra');
 
 const SIZES = [16, 48, 128];
-const SOURCE_ICON = path.join(__dirname, '../src/assets/icon.png');
+const SOURCE_ICON = path.join(__dirname, '../src/assets/icon.jpeg');
 const OUTPUT_DIR = path.join(__dirname, '../dist/assets/icons');
 
 async function generateIcons() {
