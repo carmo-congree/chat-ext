@@ -2,6 +2,9 @@
 
 A Chrome extension that enables AI-powered chat interactions with webpage content using Hugging Face models.
 
+
+![Screenshot]()
+
 ## Features
 
 - 🔍 Process selected text or entire webpage content
