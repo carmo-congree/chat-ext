@@ -9,7 +9,7 @@ const distAssetsDir = path.join(distDir, 'assets');
 
 async function generateIcons() {
   const sizes = [16, 48, 128];
-  const svgPath = path.join(assetsDir, 'icons/icon.svg');
+  const svgPath = path.join(assetsDir, 'icon.jpeg');
   const iconDir = path.join(distAssetsDir, 'icons');
 
   // Ensure directories exist

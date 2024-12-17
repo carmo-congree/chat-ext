@@ -1,0 +1,50 @@
+name: Create Release Archive
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Get version from manifest
+        id: get_version
+        run: |
+          VERSION=$(cat manifest.json | jq -r .version)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create release archive
+        run: |
+          mkdir -p "chat-ext-${{ steps.get_version.outputs.version }}"
+          cp -r dist/* "chat-ext-${{ steps.get_version.outputs.version }}/"
+          zip -r "chat-ext-${{ steps.get_version.outputs.version }}.zip" "chat-ext-${{ steps.get_version.outputs.version }}"
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.get_version.outputs.version }}
+          release_name: Release v${{ steps.get_version.outputs.version }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./chat-ext-${{ steps.get_version.outputs.version }}.zip
+          asset_name: chat-ext-${{ steps.get_version.outputs.version }}.zip
+          asset_content_type: application/zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release-archive
+          path: chat-ext-${{ steps.get_version.outputs.version }}.zip
